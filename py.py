@@ -5,7 +5,7 @@ from flask import Flask, render_template
 app = Flask(__name__)
 
 def get_data(url):
-    response = requests.get(url, timeout=5)
+    response = requests.get(url, timeout=5) 
     return json.loads(response.text)
 
 @app.route("/")
