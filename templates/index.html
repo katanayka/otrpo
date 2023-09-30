@@ -1,0 +1,16 @@
+<head>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</head>
+
+<body>
+<input type="text" placeholder="Я ВЫБИРАЮ..." id="search">
+    <table id="tableBody">
+        {% for item in data %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.url }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
