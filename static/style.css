@@ -1,0 +1,118 @@
+.pokemon-container {
+    display: inline-block;
+    align-items: center;
+    margin: 10px;
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #333;
+    width: 288px; 
+    height: 148px;
+    position: relative;
+}
+
+.battle-pokemon-container {
+    display: inline-block;
+    align-items: center;
+    margin: 10px;
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #333;
+    width: 288px; 
+    height: 99px;
+    position: relative;
+}
+
+
+.pokemon-image {
+    float: left;
+    width: 96px; 
+    height: 96px; 
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+    transition: transform .2s;
+}
+.pokemon-image:hover {
+    transform: scale(1.1);
+}
+.pokemon-stats {
+    float: right; 
+    text-align: right; 
+}
+.pokemon-name {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    align-items: center;
+}
+.pokemon-row {
+    text-align: center; /* Центрируем ряд блоков */
+}
+
+.choose-button {
+    width: 100%;
+    padding: 10px;  
+    background-color: #333; 
+    border: 2px solid #e5e5e5; 
+    border-radius: 10px;
+    cursor: pointer; 
+    position: relative;
+    text-align: center;
+    margin-top: 11px;
+    color: #fff;
+}
+
+
+
+.choose-button:hover {
+    background-color: #fff;
+    color: #333;
+}
+
+body {
+    background-color: #333;
+    color: #fff;
+}
+
+#pokemon-info {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #333;
+    padding: 20px;
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+    z-index: 1000;
+    display: none;
+  }
+  
+.pepe {
+    text-align: center;
+    align-items: center;
+}
+#modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Цвет фона с небольшой прозрачностью */
+    display: none;
+    z-index: 999;
+}
+
+.hp {
+    width: 100%;
+    padding: 10px;  
+    background-color: #333; 
+    border: 2px solid #e5e5e5; 
+    border-radius: 10px;
+    position: relative;
+    text-align: center;
+    margin-top: 11px;
+    color: #fff;
+}

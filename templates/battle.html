@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="pokemon-row">
+        <div class="battle-pokemon-container">
+            <div class="pokemon-image">
+                <img src="{{ player.front_default }}" alt="{{ player.name }}">
+            </div>
+            <div class="pokemon-name">
+                {{ player.name }}
+            </div>
+            <div class="pokemon-stats">
+                <div>HP: <span id="player_hp">{{ player.hp }}</span></div>
+                <div>Defense: <span id="player_defense">{{ player.defense }}</span></div>
+                <div>Attack: </span>{{ player.attack }}</div>
+                <div>Type: {{ player.types|join(', ') }}</div>
+            </div>
+        </div>
+        vs
+        <div class="battle-pokemon-container">
+            <div class="pokemon-image">
+                <img src="{{ enemy.front_default }}" alt="{{ enemy.name }}">
+            </div>
+            <div class="pokemon-name">
+                {{ enemy.name }}
+            </div>
+            <div class="pokemon-stats">
+                <div>HP: <span id="enemy_hp">{{ enemy.hp }}</span></div>
+                <div>Defense: <span id="enemy_defense">{{ enemy.defense }}</span></div>
+                <div>Attack: {{ enemy.attack }}</div>
+                <div>Type: {{ enemy.types|join(', ') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="battle-controls" id = "battle-controls">
+        <label for="userInput">Бросить кубик (1-10):</label>
+        <input type="number" id="userInput" min="1" max="10">
+        <button id="rollDiceButton">Бросить кубик</button>
+        <button id="quickBattleButton">Быстрый бой</button>
+        <p id="diceResult"></p>
+    </div>
+
+    <script src="{{ url_for('static', filename='battle.js') }}" defer></script>
+</body>
+</html>

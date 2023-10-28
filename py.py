@@ -1,20 +1,328 @@
+import datetime
 import json
 import requests
-from flask import Flask, render_template
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify
+import sqlite3
+import random
+import os
+import smtplib
+import smtplib
+import ssl
+from email.message import EmailMessage
 
 app = Flask(__name__)
+CACHE_TIMEOUT = 600
+PER_PAGE = 20
+SECRET_KEY = os.urandom(12).hex()
+
+
+@app.route("/", methods=['GET', 'POST'])
+@app.route("/<int:id>")
+def main(id=None):
+    page = int(request.args.get('page', 1)) 
+    url_count = 'https://pokeapi.co/api/v2/pokemon'
+    count = get_data(url_count)["count"]
+    total_pages = count // PER_PAGE + (count % PER_PAGE > 0)
+    search = request.args.get('search', '')
+    pokemon_data = []
+    if id: 
+        pokemon_data.append(get_pokemon_data(id))
+    else:
+        pokemon_data = get_pokemon_page(page, PER_PAGE)
+
+    return render_template("index.html", data=pokemon_data, page=page, total_pages=total_pages, per_page=PER_PAGE, search=search)
+
+def get_pokemon_data(item):
+    print(type(item))
+    if type(item) is str or type(item) is int:
+        pokemon_url = f'https://pokeapi.co/api/v2/pokemon/{item}/'
+    else: 
+        pokemon_url = item["url"]
+    pokemon_info = get_data(pokemon_url)
+    front_default = pokemon_info["sprites"]["front_default"]
+    id = pokemon_info["id"]
+    name = pokemon_info["name"]
+    hp = pokemon_info["stats"][0]["base_stat"]
+    attack = pokemon_info["stats"][1]["base_stat"]
+    defense = pokemon_info["stats"][2]["base_stat"]
+    specialattack = pokemon_info["stats"][3]["base_stat"]
+    specialdefense = pokemon_info["stats"][4]["base_stat"]
+    speed = pokemon_info["stats"][5]["base_stat"]
+    types = [t["type"]["name"] for t in pokemon_info["types"]]
+
+    return({"name": name, 
+            "id": id,
+            "front_default": front_default, 
+            "hp": hp,
+            "attack": attack, 
+            "defense": defense, 
+            "special-attack": specialattack, 
+            "special-defence": specialdefense,
+            "speed": speed, 
+            "types": types})   
+
+@app.route("/fight", methods=['GET'])
+def battle():
+    player_id = request.args.get('player')
+    enemy = get_random_pokemon()
+    player = get_pokemon_data(player_id)
+    global battle_data
+    battle_data = {
+        "player": player,
+        "enemy": enemy
+    }
+    return render_template("battle.html", player=player, enemy=enemy)
+
+rounds = 0
+@app.route("/fight/<int:player_roll>", methods=['POST'])
+def update_battle(player_roll):
+    global battle_data
+    global rounds
+    player = battle_data["player"]
+    enemy = battle_data["enemy"]
+
+    enemy_roll = random.randint(1, 10)
+    player_attack = player_roll % 2 == enemy_roll % 2
+    if player_attack:
+        if enemy["defense"] > 0:
+            enemy["defense"] -= player["attack"]
+        else:
+            enemy["hp"] -= player["attack"]
+    else:
+        if player["defense"] > 0:
+            player["defense"] -= enemy["attack"]
+        else:
+            player["hp"] -= enemy["attack"]
+    rounds += 1
+    winner = None
+    if player["hp"] <= 0:
+        winner = enemy
+    elif enemy["hp"] <= 0:
+        winner = player
+
+    if winner:
+        record_battle(winner["id"], player["id"], enemy["id"], rounds)
+
+    battle_data["player"] = player
+    battle_data["enemy"] = enemy
+
+    return jsonify({
+    "player": player,
+    "enemy": enemy,
+    "winner": winner
+})
+
+@app.route("/fight/fast", methods=['GET'])
+def fast_battle():
+    global battle_data
+    player = battle_data["player"]
+    enemy = battle_data["enemy"]
+    rounds = 0
+
+    while player["hp"] > 0 and enemy["hp"] > 0:
+        player_roll = random.randint(1, 10)
+        enemy_roll = random.randint(1, 10)
+
+        player_attack = player_roll % 2 == enemy_roll % 2
+        if player_attack:
+            if enemy["defense"] > 0:
+                enemy["defense"] -= player["attack"]
+            else:
+                enemy["hp"] -= player["attack"]
+        else:
+            if player["defense"] > 0:
+                player["defense"] -= enemy["attack"]
+            else:
+                player["hp"] -= enemy["attack"]
+
+        rounds += 1
+
+    winner = None
+    if player["hp"] <= 0:
+        winner = enemy
+    elif enemy["hp"] <= 0:
+        winner = player
+
+    if winner:
+        record_battle(winner["id"], player["id"], enemy["id"], rounds)
+
+    battle_data["player"] = player
+    battle_data["enemy"] = enemy
+
+    return jsonify({
+    "player": player,
+    "enemy": enemy,
+    "winner": winner
+})
+
+@app.route("/random")
+def random_pokemon():
+    pokemon_data = [get_random_pokemon()]
+    return render_template("index.html", data=pokemon_data, page=1, total_pages=1, per_page=PER_PAGE, search=None)
+
+@app.route("/pokemon/list", methods=['GET'])
+def get_pokemon_list():
+    characteristic = request.args.get('characteristic')
+    pokemon_data = [get_random_pokemon()]
+    if characteristic not in pokemon_data[0]:
+        return "Недопустимая характеристика", 400
+    selected_characteristic = [pokemon[characteristic] for pokemon in pokemon_data]
+    return jsonify(selected_characteristic)
+
+@app.route("/search")
+def search_pokemon():
+    # Получите текст для поиска из параметров запроса (например, "text")
+    search_text = request.args.get('text', '').lower()
+    pokemon_data = []
+    if not search_text:
+        return "pipec"
+    url = 'https://pokeapi.co/api/v2/pokedex/national'
+    data = get_data(url)["pokemon_entries"]
+    for item in range(len(data)):
+        if data[item]["pokemon_species"]["name"].find(search_text) != -1:
+            pokemon_data.append(get_pokemon_data(data[item]["pokemon_species"]["name"]))
+    print(pokemon_data)
+
+    return render_template("index.html", data=pokemon_data, page=1, total_pages=1, per_page=9999, search=None)
+
+
+def get_pokemon_page(page, PER_PAGE):
+    offset = (page - 1) * PER_PAGE
+    url = f'https://pokeapi.co/api/v2/pokemon?limit={PER_PAGE}&offset={offset}'
+    pokemon_data = []
+    data = get_data(url)["results"]
+    for item in data:
+        pokemon_data.append(get_pokemon_data(item))
+    return pokemon_data
+
+def get_random_pokemon():
+    url = 'https://pokeapi.co/api/v2/pokedex/national'
+    data = get_data(url)["pokemon_entries"]
+    return(get_pokemon_data(random.choice(data)["pokemon_species"]["name"]))
 
 def get_data(url):
     response = requests.get(url, timeout=5) 
     return json.loads(response.text)
 
-@app.route("/")
-def main():
-    url_count = 'https://pokeapi.co/api/v2/pokemon'
-    count = get_data(url_count)["count"]
-    url = f'https://pokeapi.co/api/v2/pokemon?limit={count}&offset=0'
-    data = get_data(url)["results"]
-    return render_template("index.html", data=data)
+conn = sqlite3.connect('battles.db')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS battles (
+        id INTEGER PRIMARY KEY,
+        timestamp DATETIME,
+        player_id INTEGER,
+        enemy_id INTEGER,
+        winner_id INTEGER,
+        rounds INTEGER
+    )
+''')
+conn.commit()
+conn.close()
+
+def record_battle(winner_id, player_id, enemy_id, rounds):
+    timestamp = datetime.datetime.now()
+    
+    conn = sqlite3.connect('battles.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO battles (timestamp, player_id, enemy_id, winner_id, rounds) VALUES (?, ?, ?, ?, ?)',
+                   (timestamp, player_id, enemy_id, winner_id, rounds))
+    
+    conn.commit()
+    conn.close()
+    
+    return 'Результат боя сохранен в базе данных.'
+
+@app.route('/add_review', methods=['POST'])
+def add_review():
+    data = request.json
+    conn = sqlite3.connect('pokemon_reviews.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO reviews (pokemon_id, username, review_text, rating) VALUES (?, ?, ?, ?)",
+              (data['pokemon_id'], data['username'], data['review_text'], data['rating']))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Отзыв успешно добавлен."})
+
+# Получение отзывов по ID покемона
+@app.route('/get_reviews/<int:pokemon_id>', methods=['GET'])
+def get_reviews(pokemon_id):
+    conn = sqlite3.connect('pokemon_reviews.db')
+    c = conn.cursor()
+    c.execute("SELECT username, review_text, rating FROM reviews WHERE pokemon_id=?", (pokemon_id,))
+    reviews = [{"username": row[0], "review_text": row[1], "rating": row[2]} for row in c.fetchall()]
+    conn.close()
+    return jsonify({"reviews": reviews})
+
+# Добавление оценки
+@app.route('/add_rating', methods=['POST'])
+def add_rating():
+    data = request.json
+    conn = sqlite3.connect('pokemon_reviews.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO ratings (pokemon_id, rating) VALUES (?, ?)",
+              (data['pokemon_id'], data['rating']))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Оценка успешно добавлена."})
+
+# Получение средней оценки по ID покемона
+@app.route('/get_average_rating/<int:pokemon_id>', methods=['GET'])
+def get_average_rating(pokemon_id):
+    conn = sqlite3.connect('pokemon_reviews.db')
+    c = conn.cursor()
+    c.execute("SELECT AVG(rating) FROM ratings WHERE pokemon_id=?", (pokemon_id,))
+    average_rating = c.fetchone()[0]
+    conn.close()
+    return jsonify({"average_rating": average_rating})
+
+conn = sqlite3.connect('pokemon_reviews.db')
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pokemon_id INTEGER,
+    username TEXT,
+    review_text TEXT,
+    rating INTEGER
+)''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS ratings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pokemon_id INTEGER,
+    rating INTEGER
+)''')
+
+conn.commit()
+conn.close()
+
+@app.route("/POCHTA", methods=["POST"])
+def send_fast_fight_result():
+    # Get the email address from the request body
+    data = request.get_json()
+    email_receiver = data.get("email")
+    winner = data.get("winner")
+
+    if not email_receiver:
+        return jsonify({"error": "Email is required"}), 400
+
+    sender_email = "katanaevdmitry45@gmail.com" # Set there email
+    sender_password = "popa" # Set there password
+
+    subject = "Fast Fight Results"
+    body = f"Winner: {winner}"
+
+    em = EmailMessage()
+    em["From"] = sender_email
+    em["To"] = email_receiver
+    em["Subject"] = subject
+    em.set_content(body)
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+        smtp.login(sender_email, sender_password)
+        smtp.sendmail(sender_email, email_receiver, em.as_string())
+
+    return jsonify({"message": body})
 
 if __name__ == '__main__':
     app.run()
