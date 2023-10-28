@@ -2,16 +2,16 @@
 <html>
 <head>
     <title>Pokemon Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Pokemon Page</h1>
     <h2>Pokemon Name</h2>
 
     <!-- Оценка звездочками -->
     <div id="starRating">
         <!-- Ваш код для отображения оценки звездочками -->
     </div>
-
+    <div id="getid" hidden >{{pokemon.id}}</div>
     <!-- Форма добавления отзыва -->
     <form id="reviewForm">
         <label for="username">Имя пользователя:</label>

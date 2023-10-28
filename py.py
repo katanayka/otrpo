@@ -9,6 +9,9 @@ import smtplib
 import smtplib
 import ssl
 from email.message import EmailMessage
+from ftplib import FTP
+from io import BytesIO
+
 
 app = Flask(__name__)
 CACHE_TIMEOUT = 600
@@ -33,7 +36,6 @@ def main(id=None):
     return render_template("index.html", data=pokemon_data, page=page, total_pages=total_pages, per_page=PER_PAGE, search=search)
 
 def get_pokemon_data(item):
-    print(type(item))
     if type(item) is str or type(item) is int:
         pokemon_url = f'https://pokeapi.co/api/v2/pokemon/{item}/'
     else: 
@@ -60,6 +62,11 @@ def get_pokemon_data(item):
             "special-defence": specialdefense,
             "speed": speed, 
             "types": types})   
+
+@app.route("/pokemon/<int:id>", methods=['GET'])
+def pokemon(id):
+    pokemon = get_pokemon_data(id)
+    return(jsonify(pokemon))
 
 @app.route("/fight", methods=['GET'])
 def battle():
@@ -181,7 +188,6 @@ def search_pokemon():
     for item in range(len(data)):
         if data[item]["pokemon_species"]["name"].find(search_text) != -1:
             pokemon_data.append(get_pokemon_data(data[item]["pokemon_species"]["name"]))
-    print(pokemon_data)
 
     return render_template("index.html", data=pokemon_data, page=1, total_pages=1, per_page=9999, search=None)
 
@@ -231,6 +237,12 @@ def record_battle(winner_id, player_id, enemy_id, rounds):
     conn.close()
     
     return 'Результат боя сохранен в базе данных.'
+
+@app.route('/reviews')
+def reviews():
+    pokemon_id = request.args.get('pokemon_id')
+    pokemon = get_pokemon_data(pokemon_id)
+    return render_template("review.html", pokemon=pokemon)
 
 @app.route('/add_review', methods=['POST'])
 def add_review():
@@ -305,7 +317,7 @@ def send_fast_fight_result():
         return jsonify({"error": "Email is required"}), 400
 
     sender_email = "katanaevdmitry45@gmail.com" # Set there email
-    sender_password = "popa" # Set there password
+    sender_password = "zgne qgaa haez urhy" # Set there password
 
     subject = "Fast Fight Results"
     body = f"Winner: {winner}"
@@ -323,6 +335,68 @@ def send_fast_fight_result():
         smtp.sendmail(sender_email, email_receiver, em.as_string())
 
     return jsonify({"message": body})
+
+def get_ftp_file_list():
+    # Укажите данные для подключения к вашему FTP-серверу
+    ftp = FTP("ftp.byethost5.com")
+    ftp.login(
+        user="b13_35319739",
+        passwd="prosto_dima12345",
+    )
+
+    ftp.cwd("htdocs")
+
+    # Получите список файлов
+    files = ftp.nlst()
+
+    # Закройте соединение с FTP
+    ftp.quit()
+
+    return files
+
+
+def send_ftp(file_list, data):
+    current_datetime = datetime.datetime.now()
+    folder_name = current_datetime.strftime("%Y%m%d")
+    ftp = FTP("ftp.byethost5.com")
+    ftp.login(
+        user="b13_35319739",
+        passwd="prosto_dima12345",
+    )
+    if folder_name in file_list:
+        ftp.cwd("htdocs")
+        ftp.cwd(folder_name)
+    else:
+        ftp.cwd("htdocs")
+        ftp.mkd(folder_name)
+        ftp.cwd(folder_name)
+    markdown = create_Markdown(data)
+    buffer = BytesIO(markdown.encode("utf-8"))
+    ftp.storbinary(f"STOR {data['name']}.md", buffer)
+    ftp.quit()
+    return jsonify({"message": "OK"})
+
+
+@app.route("/api/getFtpFiles", methods=["GET"])
+def get_ftp_files():
+    file_list = get_ftp_file_list()
+    return jsonify({"files": file_list})
+
+
+@app.route("/api/sendFtpFile", methods=["GET"])
+def send_ftp_files():
+    print(request.args.get('pokemon'))
+    dataPokemon = get_pokemon_data(request.args.get('pokemon'))
+    file_list = get_ftp_file_list()
+    return send_ftp(file_list, dataPokemon)
+
+def create_Markdown(data):
+    print(data)
+    markdown_text = f"**Name:** {data['name']}\n"
+    markdown_text += f"![Image]({data['front_default']})\n"
+    markdown_text += f"**Types:** {', '.join(data['types'])}\n"
+    return markdown_text
+
 
 if __name__ == '__main__':
     app.run()

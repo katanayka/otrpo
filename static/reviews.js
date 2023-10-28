@@ -2,9 +2,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const reviewForm = document.getElementById("reviewForm");
     const reviewsContainer = document.getElementById("reviews");
     const starRating = document.getElementById("starRating");
-
+    const pokemon_id = document.getElementById("getid").innerHTML;
     // Ваш код для отображения оценки звездочками
-
     // Отправка отзыва
     reviewForm.addEventListener("submit", function(event) {
         event.preventDefault();
@@ -13,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const review = document.getElementById("review").value;
 
         const data = {
-            pokemon_id: 1,  // Замените на соответствующий ID покемона
+            pokemon_id: pokemon_id,
             username: username,
             rating: rating,
             review_text: review
@@ -37,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Загрузка и отображение отзывов
     function loadReviews() {
-        fetch("/get_reviews/1") // Замените на соответствующий ID покемона
+        fetch("/get_reviews/" + pokemon_id) // Замените на соответствующий ID покемона
         .then(response => response.json())
         .then(data => {
             reviewsContainer.innerHTML = "";
