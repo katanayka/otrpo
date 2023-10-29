@@ -11,27 +11,30 @@ import ssl
 from email.message import EmailMessage
 from ftplib import FTP
 from io import BytesIO
-
+from dotenv import load_dotenv
+import redis
 
 app = Flask(__name__)
 CACHE_TIMEOUT = 600
 PER_PAGE = 20
-SECRET_KEY = os.urandom(12).hex()
+load_dotenv()
+TOKEN = os.getenv("TOKEN")
+DOMAIN = os.getenv("DOMAIN")
+# Используйте вашу строку подключения к Redis
+redis_url = "redis://default:4daae7b3c7964f57b75b7667edade996@us1-game-falcon-37220.upstash.io:37220"
 
+# Инициализируйте клиент Redis
+redis_client = redis.from_url(redis_url)
 
 @app.route("/", methods=['GET', 'POST'])
-@app.route("/<int:id>")
-def main(id=None):
+def main():
     page = int(request.args.get('page', 1)) 
     url_count = 'https://pokeapi.co/api/v2/pokemon'
     count = get_data(url_count)["count"]
     total_pages = count // PER_PAGE + (count % PER_PAGE > 0)
     search = request.args.get('search', '')
     pokemon_data = []
-    if id: 
-        pokemon_data.append(get_pokemon_data(id))
-    else:
-        pokemon_data = get_pokemon_page(page, PER_PAGE)
+    pokemon_data = get_pokemon_page(page, PER_PAGE)
 
     return render_template("index.html", data=pokemon_data, page=page, total_pages=total_pages, per_page=PER_PAGE, search=search)
 
@@ -40,6 +43,11 @@ def get_pokemon_data(item):
         pokemon_url = f'https://pokeapi.co/api/v2/pokemon/{item}/'
     else: 
         pokemon_url = item["url"]
+
+    cached_data = redis_client.get(f'pokemon_{item}')
+    if cached_data:
+        return json.loads(cached_data.decode('utf-8'))
+
     pokemon_info = get_data(pokemon_url)
     front_default = pokemon_info["sprites"]["front_default"]
     id = pokemon_info["id"]
@@ -52,16 +60,22 @@ def get_pokemon_data(item):
     speed = pokemon_info["stats"][5]["base_stat"]
     types = [t["type"]["name"] for t in pokemon_info["types"]]
 
-    return({"name": name, 
-            "id": id,
-            "front_default": front_default, 
-            "hp": hp,
-            "attack": attack, 
-            "defense": defense, 
-            "special-attack": specialattack, 
-            "special-defence": specialdefense,
-            "speed": speed, 
-            "types": types})   
+    pokemon_data = {
+        "name": name, 
+        "id": id,
+        "front_default": front_default, 
+        "hp": hp,
+        "attack": attack, 
+        "defense": defense, 
+        "special-attack": specialattack, 
+        "special-defense": specialdefense,
+        "speed": speed, 
+        "types": types
+    }
+
+    redis_client.set(f'pokemon_{item}', json.dumps(pokemon_data))
+
+    return pokemon_data
 
 @app.route("/pokemon/<int:id>", methods=['GET'])
 def pokemon(id):
@@ -316,8 +330,8 @@ def send_fast_fight_result():
     if not email_receiver:
         return jsonify({"error": "Email is required"}), 400
 
-    sender_email = "katanaevdmitry45@gmail.com" # Set there email
-    sender_password = "zgne qgaa haez urhy" # Set there password
+    sender_email = os.getenv("sender_email")# Set there email
+    sender_password =  os.getenv("sender_password") # Set there password
 
     subject = "Fast Fight Results"
     body = f"Winner: {winner}"
@@ -340,8 +354,8 @@ def get_ftp_file_list():
     # Укажите данные для подключения к вашему FTP-серверу
     ftp = FTP("ftp.byethost5.com")
     ftp.login(
-        user="b13_35319739",
-        passwd="prosto_dima12345",
+        user = os.getenv("FTP_USER"),
+        passwd= os.getenv("FTP_PASSWORD"),
     )
 
     ftp.cwd("htdocs")
@@ -360,8 +374,8 @@ def send_ftp(file_list, data):
     folder_name = current_datetime.strftime("%Y%m%d")
     ftp = FTP("ftp.byethost5.com")
     ftp.login(
-        user="b13_35319739",
-        passwd="prosto_dima12345",
+        user = os.getenv("FTP_USER"),
+        passwd= os.getenv("FTP_PASSWORD"),
     )
     if folder_name in file_list:
         ftp.cwd("htdocs")
