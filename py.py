@@ -78,7 +78,7 @@ def get_pokemon_data(item):
         "types": types
     }
 
-    redis_client.set(f'pokemon_{item}', json.dumps(pokemon_url))
+    redis_client.set(f'{pokemon_url}', json.dumps(pokemon_data))
 
     return pokemon_data
 
