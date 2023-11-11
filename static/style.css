@@ -7,7 +7,7 @@
     padding: 10px;
     background-color: #333;
     width: 288px; 
-    height: 250px;
+    height: 200px;
     position: relative;
 }
 
@@ -52,9 +52,9 @@
     text-align: center; /* Центрируем ряд блоков */
 }
 
-.choose-button {
-    width: 100%;
-    padding: 10px;  
+.review-button, .ftp-button, .battle-button {
+    width: 49%;
+    padding: 10px;
     background-color: #333; 
     border: 2px solid #e5e5e5; 
     border-radius: 10px;
@@ -65,9 +65,22 @@
     color: #fff;
 }
 
+.ftp-button {
+    float: right;
+    display: inline;
+}
 
+.review-button {
+    float: left;
+    display: inline;
+}
 
-.choose-button:hover {
+.battle-button {
+    width: 100%;
+    display: inline-block;
+}
+
+.review-button:hover, .ftp-button:hover, .battle-button:hover {
     background-color: #fff;
     color: #333;
 }

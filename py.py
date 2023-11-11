@@ -6,7 +6,6 @@ import sqlite3
 import random
 import os
 import smtplib
-import smtplib
 import ssl
 from email.message import EmailMessage
 from ftplib import FTP
@@ -16,7 +15,7 @@ import redis
 
 app = Flask(__name__)
 CACHE_TIMEOUT = 600
-PER_PAGE = 20
+PER_PAGE = 15
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 DOMAIN = os.getenv("DOMAIN")
@@ -31,8 +30,16 @@ def main():
     count = get_data(url_count)["count"]
     total_pages = count // PER_PAGE + (count % PER_PAGE > 0)
     search = request.args.get('search', '')
+
+    cached_data = redis_client.get(f'page_{page}')
+    
+    if cached_data:
+        return render_template("index.html", data=json.loads(cached_data.decode('utf-8')), page=page, total_pages=total_pages, per_page=PER_PAGE, search=search)
+
     pokemon_data = []
     pokemon_data = get_pokemon_page(page, PER_PAGE)
+    
+    redis_client.set(f'page_{page}', json.dumps(pokemon_data))
 
     return render_template("index.html", data=pokemon_data, page=page, total_pages=total_pages, per_page=PER_PAGE, search=search)
 
@@ -42,7 +49,7 @@ def get_pokemon_data(item):
     else: 
         pokemon_url = item["url"]
 
-    cached_data = redis_client.get(f'pokemon_{item}')
+    cached_data = redis_client.get(f'{pokemon_url}')
     if cached_data:
         return json.loads(cached_data.decode('utf-8'))
 
@@ -71,7 +78,7 @@ def get_pokemon_data(item):
         "types": types
     }
 
-    redis_client.set(f'pokemon_{item}', json.dumps(pokemon_data))
+    redis_client.set(f'pokemon_{item}', json.dumps(pokemon_url))
 
     return pokemon_data
 

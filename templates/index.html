@@ -20,16 +20,17 @@
                     <div>Defense: {{ item.defense }}</div>
                     <div>Type: {{ item.types|join(', ') }}</div>
                 </div>
+                <div>
                 <a href="{{ url_for('battle', player=item.id) }}">
-                    <button class="choose-button"> {{ item.name }}, я выбираю тебя!</button>
+                    <button class="battle-button"> {{ item.name }}, я выбираю тебя!</button>
                 </a>
                 <a href="{{ url_for('reviews', pokemon_id=item.id)}}">
-                    <button class="choose-button"> отзывы </button>
+                    <button class="review-button"> отзывы </button>
                 </a>
                 <a href="{{ url_for('send_ftp_files', pokemon=item.id)}}">
-                    <button class="choose-button"> ftp </button>
+                    <button class="ftp-button"> ftp </button>
                 </a>
-                
+                </div>
             </div>
         {% endfor %}
     </div>
