@@ -1,61 +1,61 @@
-<html>
-<head>
-    <script src="{{ url_for('static', filename='main.js') }}" defer></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+    <html>
+    <head>
+        <script src="{{ url_for('static', filename='main.js') }}" defer></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
 
-<body>
-    <div class = "pokemon-row">
-        {% for item in data %}
-            <div class="pokemon-container">
-                <div class="pokemon-image">
-                    <img src="{{ item.front_default }}" alt="{{ item.name }}" onclick="showPokemonInfo('{{ item.name }}')">
+    <body>
+        <div class = "pokemon-row">
+            {% for item in data %}
+                <div class="pokemon-container">
+                    <div class="pokemon-image">
+                        <img src="{{ item.front_default }}" alt="{{ item.name }}" onclick="showPokemonInfo('{{ item.name }}')">
+                    </div>
+                    <div class="pokemon-name">
+                        {{ item.name }}
+                    </div>
+                    <div class="pokemon-stats">
+                        <div>HP: {{ item.hp }}</div>
+                        <div>Attack: {{ item.attack }}</div>
+                        <div>Defense: {{ item.defense }}</div>
+                        <div>Type: {{ item.types|join(', ') }}</div>
+                    </div>
+                    <div>
+                    <a href="{{ url_for('battle', player=item.id) }}">
+                        <button class="battle-button"> {{ item.name }}, я выбираю тебя!</button>
+                    </a>
+                    <a href="{{ url_for('reviews', pokemon_id=item.id)}}">
+                        <button class="review-button"> отзывы </button>
+                    </a>
+                    <a href="{{ url_for('send_ftp_files', pokemon=item.id)}}">
+                        <button class="ftp-button"> ftp </button>
+                    </a>
+                    </div>
                 </div>
-                <div class="pokemon-name">
-                    {{ item.name }}
-                </div>
-                <div class="pokemon-stats">
-                    <div>HP: {{ item.hp }}</div>
-                    <div>Attack: {{ item.attack }}</div>
-                    <div>Defense: {{ item.defense }}</div>
-                    <div>Type: {{ item.types|join(', ') }}</div>
-                </div>
-                <div>
-                <a href="{{ url_for('battle', player=item.id) }}">
-                    <button class="battle-button"> {{ item.name }}, я выбираю тебя!</button>
-                </a>
-                <a href="{{ url_for('reviews', pokemon_id=item.id)}}">
-                    <button class="review-button"> отзывы </button>
-                </a>
-                <a href="{{ url_for('send_ftp_files', pokemon=item.id)}}">
-                    <button class="ftp-button"> ftp </button>
-                </a>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-    <div>
-        <form method="get" action="/">
-        {% if page > 1 %}
-            <a href="/?page={{ page - 1 }}"><</a>
-        {% endif %}
-        <input type="number" name="page" id="page" min="1" max="{{ total_pages }}" value="{{ page }}">
-        {% if page < total_pages %}
-            <a href="/?page={{ page + 1 }}">></a>
-        {% endif %}
-        <button type="submit">Перейти</button>
-        </form>
-        <form id="myForm">
-            <input type="search" id="param" name="param" minlength="3">
-            <input type="button" value="БУМ" onclick="openLink()">
-        </form>
-    </div>
-
-    <div class="pepe">
-        <div class="pokemon-info" id="pokemon-info">
-          <img id="pokemon-image" src="" alt="Pokemon Image">
+            {% endfor %}
         </div>
-        <div class="modal-overlay" id="modal-overlay"></div>
-    </div>
-</body>
-</html>
+        <div>
+            <form method="get" action="/">
+            {% if page > 1 %}
+                <a href="/?page={{ page - 1 }}"><</a>
+            {% endif %}
+            <input type="number" name="page" id="page" min="1" max="{{ total_pages }}" value="{{ page }}">
+            {% if page < total_pages %}
+                <a href="/?page={{ page + 1 }}">></a>
+            {% endif %}
+            <button type="submit">Перейти</button>
+            </form>
+            <form id="myForm">
+                <input type="search" id="param" name="param" minlength="3">
+                <input type="button" value="БУМ" onclick="openLink()">
+            </form>
+        </div>
+
+        <div class="pepe">
+            <div class="pokemon-info" id="pokemon-info">
+            <img id="pokemon-image" src="" alt="Pokemon Image">
+            </div>
+            <div class="modal-overlay" id="modal-overlay"></div>
+        </div>
+    </body>
+    </html>
