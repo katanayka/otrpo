@@ -1,0 +1,8 @@
+<!-- templates/profile.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Welcome, {{ user.username }}!</h2>
+  <p>Email: {{ user.email }}</p>
+  <!-- Add more user-related information as needed -->
+{% endblock %}

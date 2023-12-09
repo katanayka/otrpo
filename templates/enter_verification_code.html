@@ -1,0 +1,19 @@
+<!-- templates/enter_verification_code.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Verification Code</title>
+</head>
+<body>
+    <h2>Enter Verification Code</h2>
+    <form method="post" action="{{ url_for('verify_code') }}">
+        <input type="hidden" name="username" value="{{ username }}">
+        <label for="code">Verification Code:</label>
+        <input type="text" name="code" required>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
