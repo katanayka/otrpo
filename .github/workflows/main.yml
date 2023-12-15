@@ -16,7 +16,7 @@ jobs:
     - name: Set up Docker
       uses: docker/setup-docker@v2
       with:
-        repository: katanayka/otrpo 
+        repository: otrpo 
 
     - name: Build Docker image
       run: docker build -t katanayka/otrpo:123 .
