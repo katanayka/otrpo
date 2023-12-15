@@ -487,7 +487,7 @@ def fast_battle():
     return jsonify({
     "player": player,
     "enemy": enemy,
-    "winner": winner, 
+    "winner": winner,  
     "rounds": rounds
 })
 
