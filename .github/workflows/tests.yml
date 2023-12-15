@@ -25,10 +25,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run unit tests
+    - name: Install pytest
       run: |
-        pytest test_app.py
+        pip install pytest
 
-    - name: Run UI tests
+    - name: Run tests
       run: |
-        pytest test_ui.py
+        pytest tests
