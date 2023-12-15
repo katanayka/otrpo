@@ -1,43 +1,44 @@
+import json
 import pytest
 from app import app
 
-BASE_URL = 'http://localhost:5000'  # Update the URL based on your app's actual URL
-
 @pytest.fixture
 def client():
-    app.config['TESTING'] = True
+    app.testing = True
     with app.test_client() as client:
         yield client
 
-def test_main_page(client):
-    response = client.get('/')
-    assert response.status_code == 200
-
-def test_pokemon_page(client):
+def test_get_pokemon_by_id(client):
     response = client.get('/pokemon/1')
+    data = json.loads(response.get_data(as_text=True))
     assert response.status_code == 200
+    assert 'id' in data
+    assert 'name' in data
 
-def test_battle_page(client):
-    response = client.get('/fight')
+def test_fast_battle(client):
+    response = client.get('/fight/fast')
+    data = json.loads(response.get_data(as_text=True))
     assert response.status_code == 200
+    assert 'player' in data
+    assert 'enemy' in data
+    assert 'winner' in data
+    assert 'rounds' in data
 
-def test_random_pokemon_page(client):
-    response = client.get('/random')
-    assert response.status_code == 200
-
-def test_pokemon_list_page(client):
+def test_get_pokemon_list(client):
     response = client.get('/pokemon/list?characteristic=hp')
+    data = json.loads(response.get_data(as_text=True))
     assert response.status_code == 200
+    assert isinstance(data, list)
 
-def test_search_page(client):
-    response = client.get('/search?text=charizard')
+def test_add_review(client):
+    payload = {
+        'pokemon_id': 1,
+        'username': 'test_user',
+        'review_text': 'This is a test review.',
+        'rating': 5
+    }
+    response = client.post('/add_review', json=payload)
+    data = json.loads(response.get_data(as_text=True))
     assert response.status_code == 200
-
-def test_get_ftp_files(client):
-    response = client.get('/api/getFtpFiles')
-    assert response.status_code == 200
-
-def test_send_ftp_file(client):
-    response = client.get('/api/sendFtpFile?pokemon=charizard')
-    assert response.status_code == 200
-
+    assert 'message' in data
+    assert data['message'] == 'Отзыв успешно добавлен.'

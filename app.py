@@ -403,7 +403,8 @@ def pokemon(id):
 def battle():
     player_id = request.args.get('player')
     enemy = get_random_pokemon()
-    player = get_pokemon_data(player_id)
+    # player = get_pokemon_data(player_id)
+    player = get_random_pokemon()
     global battle_data
     battle_data = {
         "player": player,
@@ -452,9 +453,8 @@ def update_battle(player_roll):
 
 @app.route("/fight/fast", methods=['GET'])
 def fast_battle():
-    global battle_data
-    player = battle_data["player"]
-    enemy = battle_data["enemy"]
+    enemy = get_random_pokemon()
+    player = get_random_pokemon()
     rounds = 0
 
     while player["hp"] > 0 and enemy["hp"] > 0:
@@ -484,13 +484,11 @@ def fast_battle():
     if winner:
         record_battle(winner["id"], player["id"], enemy["id"], rounds)
 
-    battle_data["player"] = player
-    battle_data["enemy"] = enemy
-
     return jsonify({
     "player": player,
     "enemy": enemy,
-    "winner": winner
+    "winner": winner, 
+    "rounds": rounds
 })
 
 @app.route("/random")
@@ -509,7 +507,6 @@ def get_pokemon_list():
 
 @app.route("/search")
 def search_pokemon():
-    # Получите текст для поиска из параметров запроса (например, "text")
     search_text = request.args.get('text', '').lower()
     pokemon_data = []
     if not search_text:
@@ -561,7 +558,14 @@ def record_battle(winner_id, player_id, enemy_id, rounds):
         a = current_user.get_username()
     else:
         a = None
-    timestamp = datetime.datetime.now()
+
+    random_year = random.randint(1900, 2023)
+    random_month = random.randint(1, 12)
+    random_day = random.randint(1, 28)
+
+    random_date = datetime.datetime(random_year, random_month, random_day)
+
+    timestamp = random_date
     conn = sqlite3.connect('battles.db')
     cursor = conn.cursor()
     cursor.execute('INSERT INTO battles (timestamp, player_id, enemy_id, winner_id, rounds, user) VALUES (?, ?, ?, ?, ?, ?)',

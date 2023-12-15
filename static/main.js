@@ -1,5 +1,48 @@
-document.addEventListener('DOMContentLoaded', () => {
-});    
+document.addEventListener("DOMContentLoaded", function() {
+  // Загрузка данных при загрузке страницы
+  loadData();
+
+  // Функция для загрузки данных
+  function loadData() {
+      fetch('/?page=1')  // Здесь указывайте путь к вашему Flask-эндпоинту
+          .then(response => response.json())
+          .then(data => {
+              // Обработка полученных данных
+              displayData(data);
+          })
+          .catch(error => console.error('Error:', error));
+  }
+
+  // Функция для отображения данных на странице
+  function displayData(data) {
+      const pokemonRow = document.querySelector('.pokemon-row');
+      pokemonRow.innerHTML = '';
+
+      data.data.forEach(item => {
+          const pokemonContainer = document.createElement('div');
+          pokemonContainer.classList.add('pokemon-container');
+
+          // Создание HTML-элементов для отображения данных
+          // ...
+
+          pokemonRow.appendChild(pokemonContainer);
+      });
+
+      // Обработка пагинации и других элементов, если необходимо
+      // ...
+
+      // Пример обработки события формы
+      const myForm = document.getElementById('myForm');
+      myForm.addEventListener('submit', function(event) {
+          event.preventDefault();
+          const param = document.getElementById('param').value;
+          // Здесь можно отправить данные на сервер для обработки
+          // fetch('/search?param=' + param) и т.д.
+      });
+  }
+
+  // Другие функции и обработчики событий
+}); 
   
 function filter_table() {
   let filter = document.querySelector('#search').value.toUpperCase();
