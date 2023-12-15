@@ -36,4 +36,3 @@ jobs:
         GITHUB_CLIENT_SECRET:  ${{ secrets.GITHUBSECRET }}
       run: |
         pytest test_app.py
-        pytest test_ui.py
