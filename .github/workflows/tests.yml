@@ -31,6 +31,8 @@ jobs:
 
     - name: Run tests
       env:
-        redis: "redis://default:4daae7b3c7964f57b75b7667edade996@us1-game-falcon-37220.upstash.io:37220"  # Set your desired Redis URL
+        redis: "redis://default:4daae7b3c7964f57b75b7667edade996@us1-game-falcon-37220.upstash.io:37220"
+        GITHUB_CLIENT_ID: "8f1f640d65cf96093742"
+        GITHUB_CLIENT_SECRET: "9d3c013672020cdb473b86e2ae8e0b386be8a4c0"
       run: |
         pytest test_app.py
