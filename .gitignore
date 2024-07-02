@@ -1,0 +1,6 @@
+.env
+/requirements.txt
+/sqlite3.exe
+/__pycache__
+/.pytest_cache
+/venv
